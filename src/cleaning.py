@@ -4,6 +4,22 @@ import pandas as pd
 from src.profiling import get_iqr_mask, get_out_of_range_mask
 
 
+def coerce_column_to_numeric(df: pd.DataFrame, column: str) -> tuple[pd.DataFrame, int]:
+    """Convert a column to numeric dtype, turning non-numeric text artifacts into NaN."""
+    if column not in df.columns:
+        raise KeyError(f"Kolumna '{column}' nie istnieje.")
+
+    cleaned = df.copy()
+    before_na = cleaned[column].isna()
+    converted = pd.to_numeric(cleaned[column], errors="coerce")
+    after_na = converted.isna()
+
+    # Count how many non-null text values were turned into NaN
+    affected = int((~before_na & after_na).sum())
+    cleaned[column] = converted
+    return cleaned, affected
+
+
 def remove_exact_duplicates(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     """Usuwa pełne duplikaty wierszy."""
     cleaned = df.drop_duplicates().copy()
@@ -12,10 +28,10 @@ def remove_exact_duplicates(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
 
 
 def handle_missing_values(
-    df: pd.DataFrame,
-    column: str,
-    strategy: str,
-    fill_value: str | float | None = None,
+        df: pd.DataFrame,
+        column: str,
+        strategy: str,
+        fill_value: str | float | None = None,
 ) -> tuple[pd.DataFrame, int]:
     """
     Obsługuje braki danych w wybranej kolumnie.
@@ -59,11 +75,11 @@ def handle_missing_values(
 
 
 def handle_out_of_range(
-    df: pd.DataFrame,
-    column: str,
-    min_val: float | None = None,
-    max_val: float | None = None,
-    action: str = "to_nan",
+        df: pd.DataFrame,
+        column: str,
+        min_val: float | None = None,
+        max_val: float | None = None,
+        action: str = "to_nan",
 ) -> tuple[pd.DataFrame, int]:
     """
     Obsługuje wartości spoza zakresu.
@@ -89,10 +105,10 @@ def handle_out_of_range(
 
 
 def handle_outliers_iqr(
-    df: pd.DataFrame,
-    column: str,
-    factor: float = 1.5,
-    action: str = "flag",
+        df: pd.DataFrame,
+        column: str,
+        factor: float = 1.5,
+        action: str = "flag",
 ) -> tuple[pd.DataFrame, int]:
     """
     Obsługuje obserwacje odstające wykryte metodą IQR.

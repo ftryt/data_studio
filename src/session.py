@@ -11,7 +11,7 @@ from src.cleaning import (
     remove_exact_duplicates,
     handle_missing_values,
     handle_out_of_range,
-    handle_outliers_iqr,
+    handle_outliers_iqr, coerce_column_to_numeric,
 )
 
 
@@ -97,6 +97,12 @@ class DataSession:
         self.current, affected = handle_out_of_range(self.current, column, min_val, max_val, action)
         detail = f"zakres=[{min_val}, {max_val}], akcja={action}"
         self._log("Reguła zakresu", column, detail, before, len(self.current), affected)
+        return affected
+
+    def convert_to_numeric(self, column: str) -> int:
+        before = len(self.current)
+        self.current, affected = coerce_column_to_numeric(self.current, column)
+        self._log("Konwersja na typ liczbowy", column, "błędne teksty -> NaN", before, len(self.current), affected)
         return affected
 
     def process_outliers(self, column: str, factor: float = 1.5, action: str = "flag") -> int:
